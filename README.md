@@ -1,6 +1,6 @@
 # CPUThermalTester
 
-Utility software to measure the cooling performance of PC.
+Utility software to measure the CPU cooling performance of PC.
 
 ![Demo](demo.png)
 

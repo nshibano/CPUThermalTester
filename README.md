@@ -6,7 +6,7 @@ Utility software to measure the cooling performance of PC.
 
 ## Getting Started
 
-Start the application and click the "Start" button to start the automated measurement.
+Download the [release](https://github.com/nshibano/CPUThermalTester/releases), start the application and click the "Start" button to start the automated measurement.
 
 ## Description
 

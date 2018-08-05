@@ -15,6 +15,9 @@ namespace CPUThermalTester
 {
     public partial class CPUThermalTester : Form
     {
+        const int N = 1 << 15;
+        const int M = 1 << 2;
+
         System.Windows.Forms.Timer Timer = new System.Windows.Forms.Timer();
         public class IntRef
         {
@@ -199,7 +202,7 @@ namespace CPUThermalTester
                     sum = sum + count - LatestCounterValues[i];
                     LatestCounterValues[i] = count;
                 }
-                double rate = (double)(1 << 15) * (double)Stopwatch.Frequency * (double)sum / (double)(timestamp - LatestTimestamp);
+                double rate = (double)N * (double)M * (double)Stopwatch.Frequency * (double)sum / (double)(timestamp - LatestTimestamp);
                 LatestTimestamp = timestamp;
                 LatestRate = rate;
                 RateSamples.Add(rate);
@@ -382,7 +385,6 @@ namespace CPUThermalTester
         public static void HeaterProc(IntRef counter)
         {
             Random random = new Random(0);
-            const int N = 1 << 15;
             double[] a = new double[N];
             double[] b = new double[N];
             double[] c = new double[N];
@@ -401,9 +403,12 @@ namespace CPUThermalTester
                 {
                     while (true)
                     {
-                        for (int i = 0; i < N; i++)
+                        for (int j = 0; j < M; j++)
                         {
-                            pc[i] = pa[i] * pb[i];
+                            for (int i = 0; i < N; i++)
+                            {
+                                pc[i] = pa[i] * pb[i];
+                            }
                         }
                         Interlocked.Increment(ref counter.content);
                     }

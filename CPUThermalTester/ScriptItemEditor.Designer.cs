@@ -77,7 +77,7 @@
             this.numericUpDown_Wait.Size = new System.Drawing.Size(91, 19);
             this.numericUpDown_Wait.TabIndex = 1;
             this.numericUpDown_Wait.Value = new decimal(new int[] {
-            180,
+            120,
             0,
             0,
             0});

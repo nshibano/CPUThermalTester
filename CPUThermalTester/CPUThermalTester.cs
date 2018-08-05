@@ -9,13 +9,27 @@ using System.Windows.Forms;
 using System.Threading;
 using OpenHardwareMonitor.Hardware;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace CPUThermalTester
 {
     public partial class CPUThermalTester : Form
     {
         System.Windows.Forms.Timer Timer = new System.Windows.Forms.Timer();
-        List<Thread> Heaters = new List<Thread>();
+        public class IntRef
+        {
+            public int content = 0;
+            public IntRef(int init)
+            {
+                content = init;
+            }
+        }
+        List<(IntRef, Thread)> Heaters = new List<(IntRef, Thread)>();
+        List<int> LatestCounterValues = new List<int>();
+        Int64 LatestTimestamp = Stopwatch.GetTimestamp();
+        double LatestRate = 0.0;
+        List<double> RateSamples = new List<double>();
+
         (int, double, double)[] Curve = new(int, double, double)[] { };
         (int, double, double)[] LatestDrawnCurve = new(int, double, double)[] { };
         Computer Computer = new Computer();
@@ -177,6 +191,23 @@ namespace CPUThermalTester
                     }
                 }
 
+                var timestamp = Stopwatch.GetTimestamp();
+                int sum = 0;
+                for (var i = 0; i < Heaters.Count; i++)
+                {
+                    var count = Heaters[i].Item1.content;
+                    sum = sum + count - LatestCounterValues[i];
+                    LatestCounterValues[i] = count;
+                }
+                double rate = (double)(1 << 15) * (double)Stopwatch.Frequency * (double)sum / (double)(timestamp - LatestTimestamp);
+                LatestTimestamp = timestamp;
+                LatestRate = rate;
+                RateSamples.Add(rate);
+                if (RateSamples.Count > SampleCount)
+                {
+                    RateSamples.RemoveAt(0);
+                }
+
                 Upd();
             }
         }
@@ -236,6 +267,9 @@ namespace CPUThermalTester
 
             textBox_AveragedPower.Text = PackagePowerSamples.Count == SampleCount ? PackagePowerSamples.Average().ToString("F3") : "N/A";
             textBox_AveragedTemp.Text = TemperatureSamples.Count == SampleCount ? TemperatureSamples.Average().ToString("F3") : "N/A";
+
+            textBox_Rate.Text = (LatestRate / 1e6).ToString("F0");
+            textBox_AverageRate.Text = RateSamples.Count == SampleCount ? (RateSamples.Average() / 1e6).ToString("F0") : "N/A";
 
             var sb = new StringBuilder();
             if (!LatestPower.HasValue)
@@ -345,10 +379,10 @@ namespace CPUThermalTester
             buffer.Dispose();
         }
 
-        public static void HeaterProc()
+        public static void HeaterProc(IntRef counter)
         {
             Random random = new Random(0);
-            const int N = 32 * 1024;
+            const int N = 1 << 15;
             double[] a = new double[N];
             double[] b = new double[N];
             double[] c = new double[N];
@@ -371,6 +405,7 @@ namespace CPUThermalTester
                         {
                             pc[i] = pa[i] * pb[i];
                         }
+                        Interlocked.Increment(ref counter.content);
                     }
                 }
             }
@@ -378,9 +413,11 @@ namespace CPUThermalTester
 
         public void Heaters_Incr()
         {
-            var heater = new Thread(() => HeaterProc());
+            var counter = new IntRef(0);
+            var heater = new Thread(() => HeaterProc(counter));
             heater.Start();
-            Heaters.Add(heater);
+            Heaters.Add((counter, heater));
+            LatestCounterValues.Add(0);
         }
 
         public void Heaters_Decr()
@@ -388,8 +425,9 @@ namespace CPUThermalTester
             if (Heaters.Count > 0)
             {
                 var i = Heaters.Count - 1;
-                Heaters[i].Abort();
+                Heaters[i].Item2.Abort();
                 Heaters.RemoveAt(i);
+                LatestCounterValues.RemoveAt(i);
             }
         }
 

@@ -382,8 +382,9 @@ namespace CPUThermalTester
             buffer.Dispose();
         }
 
-        public static void HeaterProc(IntRef counter)
+        public static void HeaterProc(object parameter)
         {
+            IntRef counter = (IntRef)parameter;
             Random random = new Random(0);
             double[] a = new double[N];
             double[] b = new double[N];
@@ -419,8 +420,8 @@ namespace CPUThermalTester
         public void Heaters_Incr()
         {
             var counter = new IntRef(0);
-            var heater = new Thread(() => HeaterProc(counter));
-            heater.Start();
+            var heater = new Thread(HeaterProc);
+            heater.Start(counter);
             Heaters.Add((counter, heater));
             LatestCounterValues.Add(0);
         }

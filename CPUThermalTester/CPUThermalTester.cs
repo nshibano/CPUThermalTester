@@ -38,12 +38,14 @@ namespace CPUThermalTester
             public readonly int HeaterThreadCount;
             public readonly double Power;
             public readonly double Temp;
+            public readonly int MFLOPS;
             
-            public Data(int heaterThreadCount, double power, double temp)
+            public Data(int heaterThreadCount, double power, double temp, int mflops)
             {
                 HeaterThreadCount = heaterThreadCount;
                 Power = power;
                 Temp = temp;
+                MFLOPS = mflops;
             }
         }
 
@@ -169,7 +171,7 @@ namespace CPUThermalTester
                     if (elapsed >= Script[PC.Value].Item2)
                     {
                         var newCurve = new List<Data>(Curve);
-                        newCurve.Add(new Data((int)numericUpDown_HeaterCount.Value, PackagePowerSamples.Average(), TemperatureSamples.Average()));
+                        newCurve.Add(new Data((int)numericUpDown_HeaterCount.Value, PackagePowerSamples.Average(), TemperatureSamples.Average(), (int)(RateSamples.Average() / 1e6)));
                         Curve = newCurve.ToArray();
 
                         if (PC.Value == Script.Length - 1)
@@ -257,7 +259,7 @@ namespace CPUThermalTester
                 listView_Curve.Items.Clear();
                 for (var i = 0; i < Curve.Length; i++)
                 {
-                    listView_Curve.Items.Add(new ListViewItem(new string[] { Curve[i].HeaterThreadCount.ToString(), Curve[i].Power.ToString("F3"), Curve[i].Temp.ToString("F3") }));
+                    listView_Curve.Items.Add(new ListViewItem(new string[] { Curve[i].HeaterThreadCount.ToString(), Curve[i].Power.ToString("F3"), Curve[i].Temp.ToString("F3"), Curve[i].MFLOPS.ToString() }));
                 }
 
                 LatestDrawnCurve = Curve;
@@ -456,7 +458,7 @@ namespace CPUThermalTester
             if (PackagePowerSamples.Count == SampleCount && TemperatureSamples.Count == SampleCount)
             {
                 var newCurve = new List<Data>(Curve);
-                newCurve.Add(new Data(Heaters.Count, PackagePowerSamples.Average(), TemperatureSamples.Average()));
+                newCurve.Add(new Data(Heaters.Count, PackagePowerSamples.Average(), TemperatureSamples.Average(), (int)(RateSamples.Average() / 1e6)));
                 Curve = newCurve.ToArray();
                 Upd();
             }

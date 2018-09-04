@@ -65,6 +65,7 @@
             this.blankControl_Plot = new CPUCoolerTester.BlankControl();
             this.label8 = new System.Windows.Forms.Label();
             this.textBox_AverageRate = new System.Windows.Forms.TextBox();
+            this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_HeaterCount)).BeginInit();
             this.SuspendLayout();
             // 
@@ -95,7 +96,8 @@
             this.listView_Curve.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader3,
             this.columnHeader4,
-            this.columnHeader5});
+            this.columnHeader5,
+            this.columnHeader6});
             this.listView_Curve.Location = new System.Drawing.Point(419, 12);
             this.listView_Curve.Name = "listView_Curve";
             this.listView_Curve.Size = new System.Drawing.Size(279, 263);
@@ -106,17 +108,17 @@
             // columnHeader3
             // 
             this.columnHeader3.Text = "Heater count";
-            this.columnHeader3.Width = 90;
+            this.columnHeader3.Width = 84;
             // 
             // columnHeader4
             // 
             this.columnHeader4.Text = "Power";
-            this.columnHeader4.Width = 90;
+            this.columnHeader4.Width = 58;
             // 
             // columnHeader5
             // 
             this.columnHeader5.Text = "Temp";
-            this.columnHeader5.Width = 90;
+            this.columnHeader5.Width = 55;
             // 
             // label1
             // 
@@ -388,6 +390,11 @@
             this.textBox_AverageRate.Size = new System.Drawing.Size(77, 19);
             this.textBox_AverageRate.TabIndex = 7;
             // 
+            // columnHeader6
+            // 
+            this.columnHeader6.Text = "Rate";
+            this.columnHeader6.Width = 63;
+            // 
             // CPUThermalTester
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -473,6 +480,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TextBox textBox_AverageRate;
+        private System.Windows.Forms.ColumnHeader columnHeader6;
     }
 }
 

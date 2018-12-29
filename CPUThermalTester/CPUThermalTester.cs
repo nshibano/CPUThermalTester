@@ -39,7 +39,7 @@ namespace CPUThermalTester
             public readonly double Power;
             public readonly double Temp;
             public readonly int MFLOPS;
-            
+
             public Data(int heaterThreadCount, double power, double temp, int mflops)
             {
                 HeaterThreadCount = heaterThreadCount;
@@ -53,10 +53,10 @@ namespace CPUThermalTester
         Data[] LatestDrawnCurve = new Data[] { };
         Computer Computer = new Computer();
 
-        (int, int)[] Script = new(int, int)[] { };
+        (int, int)[] Script = new (int, int)[] { };
         int? PC = null;
         DateTime StepStart = DateTime.MinValue;
-        Tuple<(int, int)[], int?> LatestDrawnScript = Tuple.Create<(int, int)[], int?>(new(int, int)[] { }, null);
+        Tuple<(int, int)[], int?> LatestDrawnScript = Tuple.Create<(int, int)[], int?>(new (int, int)[] { }, null);
 
         float? LatestPower = null;
         float? LatestTemp = null;
@@ -65,7 +65,7 @@ namespace CPUThermalTester
         List<float> PackagePowerSamples = new List<float>();
         List<float> TemperatureSamples = new List<float>();
 
-        List<(string, PointD[])> RefData = new List<(string, PointD[])>();
+        List<(string, PointD[], PointD[])> RefData = new List<(string, PointD[], PointD[])>();
 
         bool IsOpeningModalDialog = false;
 
@@ -171,7 +171,7 @@ namespace CPUThermalTester
                     if (elapsed >= Script[PC.Value].Item2)
                     {
                         var newCurve = new List<Data>(Curve);
-                        newCurve.Add(new Data((int)numericUpDown_HeaterCount.Value, PackagePowerSamples.Average(), TemperatureSamples.Average(), (int)(RateSamples.Average() / 1e6)));
+                        newCurve.Add(new Data((int)numericUpDown_HeaterCount.Value, PackagePowerSamples.Average(), TemperatureSamples.Average(), (int)(RateSamples.Average() / 1e8)));
                         Curve = newCurve.ToArray();
 
                         if (PC.Value == Script.Length - 1)
@@ -354,9 +354,11 @@ namespace CPUThermalTester
             var points = new List<Tuple<Color, PointD[]>>();
             for (var i = 0; i < RefData.Count; i++)
             {
-                points.Add(Tuple.Create(PlotTool.ChooseColor(i), RefData[i].Item2));
+                points.Add(Tuple.Create(PlotTool.ChooseColor(2 * i), RefData[i].Item2));
+                points.Add(Tuple.Create(PlotTool.ChooseColor(2 * i + 1), RefData[i].Item3));
             }
             points.Add(Tuple.Create(Color.White, Curve.Select(data => new PointD(data.Power, data.Temp)).ToArray()));
+            points.Add(Tuple.Create(Color.Gray, Curve.Select(data => new PointD(data.Power, data.MFLOPS)).ToArray()));
 
             PointD? marker = null;
             if (PackagePowerSamples.Count == SampleCount && TemperatureSamples.Count == SampleCount)
@@ -458,7 +460,7 @@ namespace CPUThermalTester
             if (PackagePowerSamples.Count == SampleCount && TemperatureSamples.Count == SampleCount)
             {
                 var newCurve = new List<Data>(Curve);
-                newCurve.Add(new Data(Heaters.Count, PackagePowerSamples.Average(), TemperatureSamples.Average(), (int)(RateSamples.Average() / 1e6)));
+                newCurve.Add(new Data(Heaters.Count, PackagePowerSamples.Average(), TemperatureSamples.Average(), (int)(RateSamples.Average() / 1e8)));
                 Curve = newCurve.ToArray();
                 Upd();
             }
@@ -475,7 +477,7 @@ namespace CPUThermalTester
             var csv = new List<string[]>();
             foreach (var x in Curve)
             {
-                csv.Add(new[] { x.HeaterThreadCount.ToString(), x.Power.ToString("F3"), x.Temp.ToString("F3") });
+                csv.Add(new[] { x.HeaterThreadCount.ToString(), x.Power.ToString("F3"), x.Temp.ToString("F3"), x.MFLOPS.ToString() });
             }
 
             IsOpeningModalDialog = true;
@@ -590,7 +592,7 @@ namespace CPUThermalTester
         private void button_ScriptClear_Click(object sender, EventArgs e)
         {
             Stop();
-            Script = new(int, int)[] { };
+            Script = new (int, int)[] { };
             Upd();
         }
 
@@ -609,19 +611,26 @@ namespace CPUThermalTester
             {
                 foreach (var (path, rows) in csvs)
                 {
-                    var accu = new List<PointD>();
+                    var temp_points = new List<PointD>();
+                    var mflops_points = new List<PointD>();
+
                     foreach (var row in rows)
                     {
                         try
                         {
                             var power = Double.Parse(row[1]);
                             var temp = Double.Parse(row[2]);
-                            accu.Add(new PointD(power, temp));
+                            temp_points.Add(new PointD(power, temp));
+
+                            double mflops = 0.0;
+                            try { mflops = Double.Parse(row[3]); }
+                            catch { }
+                            mflops_points.Add(new PointD(power, mflops));
                         }
                         catch { }
                     }
 
-                    RefData.Add((System.IO.Path.GetFileNameWithoutExtension(path), accu.ToArray()));
+                    RefData.Add((System.IO.Path.GetFileNameWithoutExtension(path), temp_points.ToArray(), mflops_points.ToArray()));
                 }
 
                 Upd();
